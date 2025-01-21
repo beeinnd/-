@@ -62,13 +62,13 @@
             <button onclick="saveState()">保存</button>
             <button onclick="loadState()">恢复</button>
         </div>
-        <textarea placeholder="HTML" id="h"></textarea>
+        <textarea id="h"></textarea>
     </div>
     <div class="editor" id="css-editor-container">
-        <textarea placeholder="CSS" id="c"></textarea>
+        <textarea id="c"></textarea>
     </div>
     <div class="editor" id="js-editor-container">
-        <textarea placeholder="JS" id="j"></textarea>
+        <textarea id="j"></textarea>
     </div>
     <div class="preview" id="preview-container">
         <iframe id="i"></iframe>
@@ -88,8 +88,7 @@
         theme: 'dracula',
         lineNumbers: true,
         autoCloseTags: true,
-        matchBrackets: true,
-        extraKeys: {'Ctrl-Space': 'autocomplete'}
+        matchBrackets: true
     });
 
     let cssEditor = CodeMirror.fromTextArea(document.getElementById('c'), {
@@ -97,8 +96,7 @@
         theme: 'dracula',
         lineNumbers: true,
         autoCloseBrackets: true,
-        matchBrackets: true,
-        extraKeys: {'Ctrl-Space': 'autocomplete'}
+        matchBrackets: true
     });
 
     let jsEditor = CodeMirror.fromTextArea(document.getElementById('j'), {
@@ -106,8 +104,7 @@
         theme: 'dracula',
         lineNumbers: true,
         autoCloseBrackets: true,
-        matchBrackets: true,
-        extraKeys: {'Ctrl-Space': 'autocomplete'}
+        matchBrackets: true
     });
 
     let previewFrame = document.getElementById('i');
