@@ -3,164 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>高级实时编辑器</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/monokai.min.css">
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
-        .toolbar {
-            display: flex;
-            justify-content: center;
-            padding: 10px;
-            background-color: #f1f1f1;
-            border-bottom: 1px solid #ccc;
-        }
-        .toolbar button {
-            margin: 0 10px;
-            padding: 10px 20px;
-            border: none;
-            background-color: #007bff;
-            color: white;
-            cursor: pointer;
-            font-size: 16px;
-            border-radius: 5px;
-        }
-        .toolbar button:hover {
-            background-color: #0056b3;
-        }
-        .editor-container {
-            display: flex;
-            flex-grow: 1;
-            overflow: hidden;
-        }
-        .editors {
-            width: 50%;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-        }
-        .editor {
-            flex-grow: 1;
-            border-bottom: 1px solid #ccc;
-        }
-        iframe {
-            width: 50%;
-            height: 100%;
-            border: none;
-        }
-    </style>
+    <title>在线编辑器</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
 </head>
 <body>
-    <div class="toolbar">
-        <button onclick="saveCode()">保存</button>
-        <button onclick="formatCode()">格式化</button>
-        <button onclick="exportCode()">导出</button>
-        <button onclick="toggleTheme()">切换主题</button>
-        <button onclick="clearCode()">清除</button>
-        <button onclick="openPreview()">分离预览</button>
-    </div>
-    <div class="editor-container">
-        <div class="editors">
-            <textarea id="html" class="editor" placeholder="HTML"></textarea>
-            <textarea id="css" class="editor" placeholder="CSS"></textarea>
-            <textarea id="js" class="editor" placeholder="JavaScript"></textarea>
-        </div>
-        <iframe id="preview"></iframe>
-    </div>
+    <style>
+        .editor { width: 33.33%; float: left; height: 50vh; }
+        .preview { width: 100%; height: 50vh; }
+        #buttons { text-align: center; margin-top: 10px; }
+    </style>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/htmlmixed/htmlmixed.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/css/css.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/javascript/javascript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/lint/lint.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/lint/javascript-lint.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/lint/css-lint.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/lint/html-lint.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prettier/2.8.8/standalone.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prettier/2.8.8/parser-html.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prettier/2.8.8/parser-css.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prettier/2.8.8/parser-babel.min.js"></script>
+    <textarea id="html" class="editor" placeholder="HTML"></textarea>
+    <textarea id="css" class="editor" placeholder="CSS"></textarea>
+    <textarea id="js" class="editor" placeholder="JS"></textarea>
+
+    <iframe id="preview" class="preview"></iframe>
+    
+    <div id="buttons">
+        <button onclick="formatCode()">格式化代码</button>
+        <button onclick="exportCode()">导出</button>
+        <button onclick="saveCode()">保存</button>
+        <button onclick="loadCode()">恢复</button>
+        <button onclick="changeTheme()">切换主题</button>
+        <button onclick="openPreview()">预览窗口分离</button>
+    </div>
 
     <script>
-        let theme = 'default';
-        const htmlEditor = CodeMirror.fromTextArea(document.getElementById('html'), { mode: 'htmlmixed', lineNumbers: true, lint: true, theme: theme });
-        const cssEditor = CodeMirror.fromTextArea(document.getElementById('css'), { mode: 'css', lineNumbers: true, lint: true, theme: theme });
-        const jsEditor = CodeMirror.fromTextArea(document.getElementById('js'), { mode: 'javascript', lineNumbers: true, lint: true, theme: theme });
+        let htmlEditor = CodeMirror.fromTextArea(document.getElementById("html"), {
+            mode: "xml",
+            theme: "default",
+            lineNumbers: true,
+            autoCloseTags: true
+        });
+
+        let cssEditor = CodeMirror.fromTextArea(document.getElementById("css"), {
+            mode: "css",
+            theme: "default",
+            lineNumbers: true,
+            autoCloseBrackets: true
+        });
+
+        let jsEditor = CodeMirror.fromTextArea(document.getElementById("js"), {
+            mode: "javascript",
+            theme: "default",
+            lineNumbers: true,
+            autoCloseBrackets: true
+        });
 
         function updatePreview() {
-            const html = htmlEditor.getValue();
-            const css = `<style>${cssEditor.getValue()}</style>`;
-            const js = `<script>${jsEditor.getValue()}<\/script>`;
-            const iframe = document.getElementById('preview');
+            let html = htmlEditor.getValue();
+            let css = "<style>" + cssEditor.getValue() + "</style>";
+            let js = "<script>" + jsEditor.getValue() + "<\/script>";
+            let iframe = document.getElementById("preview");
             iframe.srcdoc = html + css + js;
         }
 
-        htmlEditor.on('change', updatePreview);
-        cssEditor.on('change', updatePreview);
-        jsEditor.on('change', updatePreview);
-
-        function saveCode() {
-            localStorage.setItem('htmlCode', htmlEditor.getValue());
-            localStorage.setItem('cssCode', cssEditor.getValue());
-            localStorage.setItem('jsCode', jsEditor.getValue());
-            alert('代码已保存');
-        }
-
-        function loadCode() {
-            htmlEditor.setValue(localStorage.getItem('htmlCode') || '');
-            cssEditor.setValue(localStorage.getItem('cssCode') || '');
-            jsEditor.setValue(localStorage.getItem('jsCode') || '');
-            updatePreview();
-        }
+        htmlEditor.on("change", updatePreview);
+        cssEditor.on("change", updatePreview);
+        jsEditor.on("change", updatePreview);
 
         function formatCode() {
-            const formattedHTML = prettier.format(htmlEditor.getValue(), { parser: "html", plugins: prettierPlugins });
-            const formattedCSS = prettier.format(cssEditor.getValue(), { parser: "css", plugins: prettierPlugins });
-            const formattedJS = prettier.format(jsEditor.getValue(), { parser: "babel", plugins: prettierPlugins });
-
-            htmlEditor.setValue(formattedHTML);
-            cssEditor.setValue(formattedCSS);
-            jsEditor.setValue(formattedJS);
+            htmlEditor.setValue(html_beautify(htmlEditor.getValue()));
+            cssEditor.setValue(css_beautify(cssEditor.getValue()));
+            jsEditor.setValue(js_beautify(jsEditor.getValue()));
         }
 
         function exportCode() {
-            const blob = new Blob([htmlEditor.getValue(), '<style>', cssEditor.getValue(), '</style>', '<script>', jsEditor.getValue(), '</script>'], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'index.html';
-            document.body.appendChild(a);
+            let html = htmlEditor.getValue();
+            let css = cssEditor.getValue();
+            let js = jsEditor.getValue();
+            let blob = new Blob([html + "<style>" + css + "</style><script>" + js + "</script>"], { type: "text/html" });
+            let a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = "code.html";
             a.click();
-            document.body.removeChild(a);
         }
 
-        function toggleTheme() {
-            theme = theme === 'default' ? 'monokai' : 'default';
-            htmlEditor.setOption('theme', theme);
-            cssEditor.setOption('theme', theme);
-            jsEditor.setOption('theme', theme);
+        function saveCode() {
+            localStorage.setItem("html", htmlEditor.getValue());
+            localStorage.setItem("css", cssEditor.getValue());
+            localStorage.setItem("js", jsEditor.getValue());
         }
 
-        function clearCode() {
-            htmlEditor.setValue('');
-            cssEditor.setValue('');
-            jsEditor.setValue('');
-            updatePreview();
+        function loadCode() {
+            if (localStorage.getItem("html")) {
+                htmlEditor.setValue(localStorage.getItem("html"));
+                cssEditor.setValue(localStorage.getItem("css"));
+                jsEditor.setValue(localStorage.getItem("js"));
+            }
+        }
+
+        function changeTheme() {
+            let themes = ["default", "dracula"];
+            let currentTheme = htmlEditor.getOption("theme");
+            let nextTheme = themes[(themes.indexOf(currentTheme) + 1) % themes.length];
+            htmlEditor.setOption("theme", nextTheme);
+            cssEditor.setOption("theme", nextTheme);
+            jsEditor.setOption("theme", nextTheme);
         }
 
         function openPreview() {
-            const newWindow = window.open();
-            newWindow.document.write(htmlEditor.getValue() + '<style>' + cssEditor.getValue() + '</style><script>' + jsEditor.getValue() + '</script>');
+            let newWindow = window.open();
+            let html = htmlEditor.getValue();
+            let css = "<style>" + cssEditor.getValue() + "</style>";
+            let js = "<script>" + jsEditor.getValue() + "<\/script>";
+            newWindow.document.write(html + css + js);
             newWindow.document.close();
         }
 
-        window.onload = loadCode;
+        window.addEventListener("load", loadCode);
     </script>
+    <script src="https://cdn.rawgit.com/beautify-web/js-beautify/v1.10.2/js/lib/beautify-html.js"></script>
+    <script src="https://cdn.rawgit.com/beautify-web/js-beautify/v1.10.2/js/lib/beautify-css.js"></script>
+    <script src="https://cdn.rawgit.com/beautify-web/js-beautify/v1.10.2/js/lib/beautify.js"></script>
 </body>
 </html>
