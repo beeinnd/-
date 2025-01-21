@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高级实时编辑器</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/monokai.min.css">
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .editor-container {
+            display: flex;
+            flex-grow: 1;
+        }
+        .editor, iframe {
+            width: 33.33%;
+            height: 100%;
+        }
+        iframe {
+            border: none;
+        }
+        button {
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <button onclick="saveCode()">保存</button>
+        <button onclick="formatCode()">格式化</button>
+        <button onclick="exportCode()">导出</button>
+        <button onclick="toggleTheme()">切换主题</button>
+        <button onclick="clearCode()">清除</button>
+        <button onclick="openPreview()">分离预览</button>
+    </div>
+    <div class="editor-container">
+        <textarea id="html" placeholder="HTML"></textarea>
+        <textarea id="css" placeholder="CSS"></textarea>
+        <textarea id="js" placeholder="JavaScript"></textarea>
+        <iframe id="preview"></iframe>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/lint/lint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/lint/javascript-lint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/lint/css-lint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/lint/html-lint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prettier/2.8.8/standalone.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prettier/2.8.8/parser-html.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prettier/2.8.8/parser-css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prettier/2.8.8/parser-babel.min.js"></script>
+
+    <script>
+        let theme = 'default';
+        const htmlEditor = CodeMirror.fromTextArea(document.getElementById('html'), { mode: 'htmlmixed', lineNumbers: true, lint: true, theme: theme });
+        const cssEditor = CodeMirror.fromTextArea(document.getElementById('css'), { mode: 'css', lineNumbers: true, lint: true, theme: theme });
+        const jsEditor = CodeMirror.fromTextArea(document.getElementById('js'), { mode: 'javascript', lineNumbers: true, lint: true, theme: theme });
+        
+        function updatePreview() {
+            const html = htmlEditor.getValue();
+            const css = `<style>${cssEditor.getValue()}</style>`;
+            const js = `<script>${jsEditor.getValue()}<\/script>`;
+            const iframe = document.getElementById('preview');
+            iframe.srcdoc = html + css + js;
+        }
+
+        htmlEditor.on('change', updatePreview);
+        cssEditor.on('change', updatePreview);
+        jsEditor.on('change', updatePreview);
+
+        function saveCode() {
+            localStorage.setItem('htmlCode', htmlEditor.getValue());
+            localStorage.setItem('cssCode', cssEditor.getValue());
+            localStorage.setItem('jsCode', jsEditor.getValue());
+            alert('代码已保存');
+        }
+
+        function loadCode() {
+            htmlEditor.setValue(localStorage.getItem('htmlCode') || '');
+            cssEditor.setValue(localStorage.getItem('cssCode') || '');
+            jsEditor.setValue(localStorage.getItem('jsCode') || '');
+            updatePreview();
+        }
+
+        function formatCode() {
+            const formattedHTML = prettier.format(htmlEditor.getValue(), { parser: "html", plugins: prettierPlugins });
+            const formattedCSS = prettier.format(cssEditor.getValue(), { parser: "css", plugins: prettierPlugins });
+            const formattedJS = prettier.format(jsEditor.getValue(), { parser: "babel", plugins: prettierPlugins });
+
+            htmlEditor.setValue(formattedHTML);
+            cssEditor.setValue(formattedCSS);
+            jsEditor.setValue(formattedJS);
+        }
+
+        function exportCode() {
+            const blob = new Blob([htmlEditor.getValue(), '<style>', cssEditor.getValue(), '</style>', '<script>', jsEditor.getValue(), '</script>'], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'index.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function toggleTheme() {
+            theme = theme === 'default' ? 'monokai' : 'default';
+            htmlEditor.setOption('theme', theme);
+            cssEditor.setOption('theme', theme);
+            jsEditor.setOption('theme', theme);
+        }
+
+        function clearCode() {
+            htmlEditor.setValue('');
+            cssEditor.setValue('');
+            jsEditor.setValue('');
+            updatePreview();
+        }
+
+        function openPreview() {
+            const newWindow = window.open();
+            newWindow.document.write(htmlEditor.getValue() + '<style>' + cssEditor.getValue() + '</style><script>' + jsEditor.getValue() + '</script>');
+            newWindow.document.close();
+        }
+
+        window.onload = loadCode;
+    </script>
+</body>
+</html>
