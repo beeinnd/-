@@ -173,17 +173,18 @@
         }
 
         function formatCode() {
-            htmlEditor.setValue(html_beautify(htmlEditor.getValue()));
-            cssEditor.setValue(css_beautify(cssEditor.getValue()));
-            jsEditor.setValue(js_beautify(jsEditor.getValue()));
+            htmlEditor.setValue(window.html_beautify(htmlEditor.getValue()));
+            cssEditor.setValue(window.css_beautify(cssEditor.getValue()));
+            jsEditor.setValue(window.js_beautify(jsEditor.getValue()));
         }
 
         function saveState() {
-            localforage.setItem('html', htmlEditor.getValue())
-                .then(() => localforage.setItem('css', cssEditor.getValue()))
-                .then(() => localforage.setItem('js', jsEditor.getValue()))
-                .then(() => Swal.fire('成功', '状态已保存', 'success'))
-                .catch(() => Swal.fire('错误', '保存失败', 'error'));
+            Promise.all([
+                localforage.setItem('html', htmlEditor.getValue()),
+                localforage.setItem('css', cssEditor.getValue()),
+                localforage.setItem('js', jsEditor.getValue())
+            ]).then(() => Swal.fire('成功', '状态已保存', 'success'))
+              .catch(() => Swal.fire('错误', '保存失败', 'error'));
         }
 
         function loadState() {
