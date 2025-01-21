@@ -1,125 +1,226 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>在线编辑器</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/css/css.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+    <title>多功能代码编辑器</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/theme/dracula.min.css">
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background-color: #f4f4f9;
+        }
+
+        /* 控制区样式 */
+        #controls {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 10px;
+            background: #333;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        #controls button, #controls select {
+            margin-right: 10px;
+            padding: 8px 15px;
+            background-color: #5c6bc0;
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        #controls button:hover, #controls select:hover {
+            background-color: #3f51b5;
+        }
+
+        /* 编辑器区样式 */
+        #editors {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            margin: 10px;
+            gap: 10px;
+            overflow: hidden;
+        }
+
+        .editor-container {
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #fff;
+            overflow: hidden;
+        }
+
+        .editor-label {
+            padding: 10px;
+            background-color: #f7f7f7;
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: bold;
+            border-bottom: 1px solid #ddd;
+        }
+
+        /* 输入框样式 */
+        textarea {
+            width: 100%;
+            height: 400px; /* 设置更高的高度 */
+            border: none;
+            padding: 10px;
+            box-sizing: border-box;
+            font-size: 16px;
+            background-color: #f4f4f9;
+            color: #333;
+            font-family: Consolas, monospace;
+        }
+
+        textarea:focus {
+            outline: none;
+            box-shadow: 0 0 5px rgba(66, 133, 244, 0.7);
+        }
+
+        /* 自定义 CodeMirror 样式 */
+        .CodeMirror {
+            height: 100%;
+        }
+    </style>
 </head>
 <body>
-    <style>
-        .editor { width: 33.33%; float: left; height: 50vh; }
-        .preview { width: 100%; height: 50vh; }
-        #buttons { text-align: center; margin-top: 10px; }
-    </style>
 
-    <textarea id="html" class="editor" placeholder="HTML"></textarea>
-    <textarea id="css" class="editor" placeholder="CSS"></textarea>
-    <textarea id="js" class="editor" placeholder="JS"></textarea>
+<!-- 控制区 -->
+<div id="controls">
+    <button onclick="exportCode()">导出代码</button>
+    <button onclick="formatCode()">格式化代码</button>
+    <button onclick="saveCode()">保存</button>
+    <button onclick="restoreCode()">恢复</button>
+    <button onclick="openPreview()">打开预览</button>
+    <select id="themeSelect" onchange="changeTheme()">
+        <option value="default">默认</option>
+        <option value="dracula">暗色</option>
+    </select>
+</div>
 
-    <iframe id="preview" class="preview"></iframe>
-    
-    <div id="buttons">
-        <button onclick="formatCode()">格式化代码</button>
-        <button onclick="exportCode()">导出</button>
-        <button onclick="saveCode()">保存</button>
-        <button onclick="loadCode()">恢复</button>
-        <button onclick="changeTheme()">切换主题</button>
-        <button onclick="openPreview()">预览窗口分离</button>
+<!-- 编辑区 -->
+<div id="editors">
+    <!-- HTML 编辑器 -->
+    <div class="editor-container">
+        <div class="editor-label">HTML</div>
+        <textarea id="htmlEditor" placeholder="输入HTML代码"></textarea>
     </div>
+    <!-- CSS 编辑器 -->
+    <div class="editor-container">
+        <div class="editor-label">CSS</div>
+        <textarea id="cssEditor" placeholder="输入CSS代码"></textarea>
+    </div>
+    <!-- JS 编辑器 -->
+    <div class="editor-container">
+        <div class="editor-label">JavaScript</div>
+        <textarea id="jsEditor" placeholder="输入JavaScript代码"></textarea>
+    </div>
+</div>
 
-    <script>
-        let htmlEditor = CodeMirror.fromTextArea(document.getElementById("html"), {
-            mode: "xml",
-            theme: "default",
-            lineNumbers: true,
-            autoCloseTags: true
-        });
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/hint/show-hint.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/hint/css-hint.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/hint/javascript-hint.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.7/beautify.min.js"></script>
 
-        let cssEditor = CodeMirror.fromTextArea(document.getElementById("css"), {
-            mode: "css",
-            theme: "default",
-            lineNumbers: true,
-            autoCloseBrackets: true
-        });
+<script>
+    // 初始化 CodeMirror 编辑器
+    const htmlEditor = CodeMirror.fromTextArea(document.getElementById('htmlEditor'), {
+        mode: 'xml',
+        lineNumbers: true,
+        theme: 'default',
+        extraKeys: { "Ctrl-Space": "autocomplete" }
+    });
+    const cssEditor = CodeMirror.fromTextArea(document.getElementById('cssEditor'), {
+        mode: 'css',
+        lineNumbers: true,
+        theme: 'default',
+        extraKeys: { "Ctrl-Space": "autocomplete" }
+    });
+    const jsEditor = CodeMirror.fromTextArea(document.getElementById('jsEditor'), {
+        mode: 'javascript',
+        lineNumbers: true,
+        theme: 'default',
+        extraKeys: { "Ctrl-Space": "autocomplete" }
+    });
 
-        let jsEditor = CodeMirror.fromTextArea(document.getElementById("js"), {
-            mode: "javascript",
-            theme: "default",
-            lineNumbers: true,
-            autoCloseBrackets: true
-        });
+    // 获取预览内容
+    function getPreviewContent() {
+        const html = htmlEditor.getValue();
+        const css = `<style>${cssEditor.getValue()}</style>`;
+        const js = `<script>${jsEditor.getValue()}<\/script>`;
+        return html + css + js;
+    }
 
-        function updatePreview() {
-            let html = htmlEditor.getValue();
-            let css = "<style>" + cssEditor.getValue() + "</style>";
-            let js = "<script>" + jsEditor.getValue() + "<\/script>";
-            let iframe = document.getElementById("preview");
-            iframe.srcdoc = html + css + js;
+    // 打开新的窗口显示预览
+    function openPreview() {
+        const previewWindow = window.open("", "_blank", "width=800,height=600");
+
+        // 检查浏览器是否允许弹出窗口
+        if (previewWindow) {
+            previewWindow.document.write(getPreviewContent());
+        } else {
+            alert('请确保浏览器没有阻止弹出窗口');
         }
+    }
 
-        htmlEditor.on("change", updatePreview);
-        cssEditor.on("change", updatePreview);
-        jsEditor.on("change", updatePreview);
+    // 导出代码
+    function exportCode() {
+        const blob = new Blob([htmlEditor.getValue(), cssEditor.getValue(), jsEditor.getValue()], { type: 'text/html' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'code.html';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 
-        function formatCode() {
-            htmlEditor.setValue(html_beautify(htmlEditor.getValue()));
-            cssEditor.setValue(css_beautify(cssEditor.getValue()));
-            jsEditor.setValue(js_beautify(jsEditor.getValue()));
-        }
+    // 格式化代码
+    function formatCode() {
+        htmlEditor.setValue(html_beautify(htmlEditor.getValue()));
+        cssEditor.setValue(css_beautify(cssEditor.getValue()));
+        jsEditor.setValue(js_beautify(jsEditor.getValue()));
+    }
 
-        function exportCode() {
-            let html = htmlEditor.getValue();
-            let css = cssEditor.getValue();
-            let js = jsEditor.getValue();
-            let blob = new Blob([html + "<style>" + css + "</style><script>" + js + "</script>"], { type: "text/html" });
-            let a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = "code.html";
-            a.click();
-        }
+    // 保存代码
+    function saveCode() {
+        localStorage.setItem('htmlCode', htmlEditor.getValue());
+        localStorage.setItem('cssCode', cssEditor.getValue());
+        localStorage.setItem('jsCode', jsEditor.getValue());
+        alert('代码已保存');
+    }
 
-        function saveCode() {
-            localStorage.setItem("html", htmlEditor.getValue());
-            localStorage.setItem("css", cssEditor.getValue());
-            localStorage.setItem("js", jsEditor.getValue());
-        }
+    // 恢复保存的代码
+    function restoreCode() {
+        const htmlCode = localStorage.getItem('htmlCode');
+        const cssCode = localStorage.getItem('cssCode');
+        const jsCode = localStorage.getItem('jsCode');
+        if (htmlCode) htmlEditor.setValue(htmlCode);
+        if (cssCode) cssEditor.setValue(cssCode);
+        if (jsCode) jsEditor.setValue(jsCode);
+    }
 
-        function loadCode() {
-            if (localStorage.getItem("html")) {
-                htmlEditor.setValue(localStorage.getItem("html"));
-                cssEditor.setValue(localStorage.getItem("css"));
-                jsEditor.setValue(localStorage.getItem("js"));
-            }
-        }
+    // 更改主题
+    function changeTheme() {
+        const theme = document.getElementById('themeSelect').value;
+        htmlEditor.setOption('theme', theme);
+        cssEditor.setOption('theme', theme);
+        jsEditor.setOption('theme', theme);
+    }
+</script>
 
-        function changeTheme() {
-            let themes = ["default", "dracula"];
-            let currentTheme = htmlEditor.getOption("theme");
-            let nextTheme = themes[(themes.indexOf(currentTheme) + 1) % themes.length];
-            htmlEditor.setOption("theme", nextTheme);
-            cssEditor.setOption("theme", nextTheme);
-            jsEditor.setOption("theme", nextTheme);
-        }
-
-        function openPreview() {
-            let newWindow = window.open();
-            let html = htmlEditor.getValue();
-            let css = "<style>" + cssEditor.getValue() + "</style>";
-            let js = "<script>" + jsEditor.getValue() + "<\/script>";
-            newWindow.document.write(html + css + js);
-            newWindow.document.close();
-        }
-
-        window.addEventListener("load", loadCode);
-    </script>
-    <script src="https://cdn.rawgit.com/beautify-web/js-beautify/v1.10.2/js/lib/beautify-html.js"></script>
-    <script src="https://cdn.rawgit.com/beautify-web/js-beautify/v1.10.2/js/lib/beautify-css.js"></script>
-    <script src="https://cdn.rawgit.com/beautify-web/js-beautify/v1.10.2/js/lib/beautify.js"></script>
 </body>
 </html>
