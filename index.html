@@ -39,13 +39,10 @@
             flex-grow: 1;
             overflow: hidden;
         }
-        .editors, .preview {
+        .editors {
             width: 50%;
-            height: 100%;
             display: flex;
             flex-direction: column;
-        }
-        .editors {
             overflow-y: auto;
         }
         .editor {
@@ -53,7 +50,7 @@
             border-bottom: 1px solid #ccc;
         }
         iframe {
-            width: 100%;
+            width: 50%;
             height: 100%;
             border: none;
         }
@@ -74,9 +71,7 @@
             <textarea id="css" class="editor" placeholder="CSS"></textarea>
             <textarea id="js" class="editor" placeholder="JavaScript"></textarea>
         </div>
-        <div class="preview">
-            <iframe id="preview"></iframe>
-        </div>
+        <iframe id="preview"></iframe>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
