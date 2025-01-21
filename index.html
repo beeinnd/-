@@ -6,101 +6,120 @@
     <title>实时代码编辑器</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/htmlmixed/htmlmixed.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/css/css.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.0/beautify.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.4.20/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body {
             margin: 0;
+            font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             height: 100vh;
         }
-        .editor-container {
+        .container {
             display: flex;
-            flex: 1;
+            flex-wrap: wrap;
+            height: 100%;
+        }
+        .editor, .preview {
+            width: 33.33%;
+            height: 50%;
         }
         .editor {
-            flex: 1;
-            padding: 10px;
+            display: flex;
+            flex-direction: column;
         }
-        .preview {
-            flex: 1;
-        }
-        iframe {
+        .editor textarea {
             width: 100%;
-            height: 100%;
-            border: none;
+            height: calc(100% - 50px);
+            font-size: 18px;
         }
         .controls {
             display: flex;
-            justify-content: space-between;
+            justify-content: space-around;
+            align-items: center;
             padding: 10px;
             background-color: #f1f1f1;
         }
-        button {
+        .controls button {
             padding: 10px 20px;
             cursor: pointer;
+        }
+        .preview iframe {
+            width: 100%;
+            height: 100%;
         }
     </style>
 </head>
 <body>
-    <div class="controls">
-        <button onclick="exportHTML()">导出</button>
-        <button onclick="openPreviewInNewTab()">分离预览</button>
-        <button onclick="toggleTheme()">切换主题</button>
-        <button onclick="formatCode()">格式化</button>
-    </div>
-    <div class="editor-container">
-        <div id="html-editor" class="editor"></div>
-        <div id="css-editor" class="editor"></div>
-        <div id="js-editor" class="editor"></div>
-    </div>
-    <div class="preview">
-        <iframe id="preview-frame"></iframe>
+    <div class="container">
+        <div class="editor" id="html-editor-container">
+            <div class="controls">
+                <button onclick="exportHTML()">导出</button>
+                <button onclick="openPreviewInNewTab()">分离预览</button>
+                <button onclick="toggleTheme()">切换主题</button>
+                <button onclick="formatCode()">格式化</button>
+                <button onclick="saveState()">保存</button>
+                <button onclick="loadState()">恢复</button>
+            </div>
+            <textarea placeholder="HTML" id="h"></textarea>
+        </div>
+        <div class="editor" id="css-editor-container">
+            <textarea placeholder="CSS" id="c"></textarea>
+        </div>
+        <div class="editor" id="js-editor-container">
+            <textarea placeholder="JS" id="j"></textarea>
+        </div>
+        <div class="preview" id="preview-container">
+            <iframe id="i"></iframe>
+        </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.4.20/sweetalert2.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.0/beautify.min.js"></script>
+    <script src="https://unpkg.com/localforage/dist/localforage.min.js"></script>
     <script>
-        let htmlEditor = CodeMirror(document.getElementById('html-editor'), {
-            value: "<!DOCTYPE html>\\n<html>\\n<head>\\n\\t<title>Document</title>\\n</head>\\n<body>\\n\\n</body>\\n</html>",
-            mode: "htmlmixed",
-            theme: "dracula",
+        let htmlEditor = CodeMirror(document.getElementById('h'), {
+            value: '<!DOCTYPE html>\\n<html>\\n<head>\\n\\t<title>Document</title>\\n</head>\\n<body>\\n\\n</body>\\n</html>',
+            mode: 'htmlmixed',
+            theme: 'dracula',
             lineNumbers: true,
             autoCloseTags: true,
             matchBrackets: true,
-            extraKeys: {"Ctrl-Space": "autocomplete"}
+            extraKeys: {'Ctrl-Space': 'autocomplete'}
         });
 
-        let cssEditor = CodeMirror(document.getElementById('css-editor'), {
-            value: "/* CSS code here */",
-            mode: "css",
-            theme: "dracula",
+        let cssEditor = CodeMirror(document.getElementById('c'), {
+            value: '/* CSS code here */',
+            mode: 'css',
+            theme: 'dracula',
             lineNumbers: true,
             autoCloseBrackets: true,
             matchBrackets: true,
-            extraKeys: {"Ctrl-Space": "autocomplete"}
+            extraKeys: {'Ctrl-Space': 'autocomplete'}
         });
 
-        let jsEditor = CodeMirror(document.getElementById('js-editor'), {
-            value: "// JavaScript code here",
-            mode: "javascript",
-            theme: "dracula",
+        let jsEditor = CodeMirror(document.getElementById('j'), {
+            value: '// JavaScript code here',
+            mode: 'javascript',
+            theme: 'dracula',
             lineNumbers: true,
             autoCloseBrackets: true,
             matchBrackets: true,
-            extraKeys: {"Ctrl-Space": "autocomplete"}
+            extraKeys: {'Ctrl-Space': 'autocomplete'}
         });
 
-        let previewFrame = document.getElementById('preview-frame');
+        let previewFrame = document.getElementById('i');
 
         function updatePreview() {
             try {
                 let htmlContent = htmlEditor.getValue();
                 let cssContent = `<style>${cssEditor.getValue()}</style>`;
-                let jsContent = `<script>${jsEditor.getValue()}<\\/script>`;
+                let jsContent = `<script>${jsEditor.getValue()}</script>`;
                 previewFrame.srcdoc = htmlContent + cssContent + jsContent;
             } catch (error) {
                 Swal.fire({
@@ -118,10 +137,10 @@
         function exportHTML() {
             let htmlContent = htmlEditor.getValue();
             let cssContent = `<style>${cssEditor.getValue()}</style>`;
-            let jsContent = `<script>${jsEditor.getValue()}<\\/script>`;
+            let jsContent = `<script>${jsEditor.getValue()}</script>`;
             let fullContent = htmlContent + cssContent + jsContent;
 
-            let blob = new Blob([fullContent], { type: 'text/html' });
+            let blob = new Blob([fullContent], {type: 'text/html'});
             let url = URL.createObjectURL(blob);
             let a = document.createElement('a');
             a.href = url;
@@ -135,7 +154,7 @@
         function openPreviewInNewTab() {
             let htmlContent = htmlEditor.getValue();
             let cssContent = `<style>${cssEditor.getValue()}</style>`;
-            let jsContent = `<script>${jsEditor.getValue()}<\\/script>`;
+            let jsContent = `<script>${jsEditor.getValue()}</script>`;
             let fullContent = htmlContent + cssContent + jsContent;
 
             let newWindow = window.open();
@@ -147,16 +166,37 @@
 
         function toggleTheme() {
             isDarkTheme = !isDarkTheme;
-            let theme = isDarkTheme ? "dracula" : "default";
-            htmlEditor.setOption("theme", theme);
-            cssEditor.setOption("theme", theme);
-            jsEditor.setOption("theme", theme);
+            let theme = isDarkTheme ? 'dracula' : 'default';
+            htmlEditor.setOption('theme', theme);
+            cssEditor.setOption('theme', theme);
+            jsEditor.setOption('theme', theme);
         }
 
         function formatCode() {
             htmlEditor.setValue(html_beautify(htmlEditor.getValue()));
             cssEditor.setValue(css_beautify(cssEditor.getValue()));
             jsEditor.setValue(js_beautify(jsEditor.getValue()));
+        }
+
+        function saveState() {
+            localforage.setItem('html', htmlEditor.getValue())
+                .then(() => localforage.setItem('css', cssEditor.getValue()))
+                .then(() => localforage.setItem('js', jsEditor.getValue()))
+                .then(() => Swal.fire('成功', '状态已保存', 'success'))
+                .catch(() => Swal.fire('错误', '保存失败', 'error'));
+        }
+
+        function loadState() {
+            Promise.all([
+                localforage.getItem('html'),
+                localforage.getItem('css'),
+                localforage.getItem('js')
+            ]).then(([html, css, js]) => {
+                if (html !== null) htmlEditor.setValue(html);
+                if (css !== null) cssEditor.setValue(css);
+                if (js !== null) jsEditor.setValue(js);
+                Swal.fire('成功', '状态已恢复', 'success');
+            }).catch(() => Swal.fire('错误', '恢复失败', 'error'));
         }
     </script>
 </body>
