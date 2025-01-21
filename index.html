@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>多功能代码编辑器</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/theme/dracula.min.css">
@@ -67,6 +67,17 @@
             font-size: 1.2em;
             font-weight: bold;
             border-bottom: 1px solid #ddd;
+            cursor: pointer;
+        }
+
+        .editor-content {
+            display: block;
+            transition: max-height 0.3s ease;
+        }
+
+        .collapsed {
+            max-height: 0;
+            overflow: hidden;
         }
 
         /* 输入框样式 */
@@ -112,18 +123,24 @@
 <div id="editors">
     <!-- HTML 编辑器 -->
     <div class="editor-container">
-        <div class="editor-label">HTML</div>
-        <textarea id="htmlEditor" placeholder="输入HTML代码"></textarea>
+        <div class="editor-label" onclick="toggleEditor('htmlEditor')">HTML</div>
+        <div id="htmlEditorContainer" class="editor-content">
+            <textarea id="htmlEditor" placeholder="输入HTML代码"></textarea>
+        </div>
     </div>
     <!-- CSS 编辑器 -->
     <div class="editor-container">
-        <div class="editor-label">CSS</div>
-        <textarea id="cssEditor" placeholder="输入CSS代码"></textarea>
+        <div class="editor-label" onclick="toggleEditor('cssEditor')">CSS</div>
+        <div id="cssEditorContainer" class="editor-content">
+            <textarea id="cssEditor" placeholder="输入CSS代码"></textarea>
+        </div>
     </div>
     <!-- JS 编辑器 -->
     <div class="editor-container">
-        <div class="editor-label">JavaScript</div>
-        <textarea id="jsEditor" placeholder="输入JavaScript代码"></textarea>
+        <div class="editor-label" onclick="toggleEditor('jsEditor')">JavaScript</div>
+        <div id="jsEditorContainer" class="editor-content">
+            <textarea id="jsEditor" placeholder="输入JavaScript代码"></textarea>
+        </div>
     </div>
 </div>
 
@@ -219,6 +236,12 @@
         htmlEditor.setOption('theme', theme);
         cssEditor.setOption('theme', theme);
         jsEditor.setOption('theme', theme);
+    }
+
+    // 切换折叠和展开编辑器
+    function toggleEditor(editorId) {
+        const editorContainer = document.getElementById(`${editorId}Container`);
+        editorContainer.classList.toggle('collapsed');
     }
 </script>
 
